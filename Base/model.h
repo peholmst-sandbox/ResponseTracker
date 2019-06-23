@@ -40,7 +40,7 @@ template <typename T> class Property {
         return *this;
     }
 
-    T& value() const { return _value.value(); }
+    T const& value() const { return _value.value(); }
 
     void clear() {
         _value.reset();
@@ -64,6 +64,11 @@ template <typename T> class Property {
 template <typename T>
 inline bool operator==(const Property<T>& p1, const Property<T>& p2) {
     return p1.hasValue() && p2.hasValue() && p1.value() == p2.value();
+}
+
+template <typename T>
+inline bool operator!=(const Property<T>& p1, const Property<T>& p2) {
+    return !(p1 == p2);
 }
 
 template <typename T>
