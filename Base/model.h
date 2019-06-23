@@ -6,13 +6,14 @@
 #include <optional>
 #include <set>
 
-#include "event.h"
-
 using namespace std;
+
+#include "common.h"
+#include "event.h"
 
 namespace Base::Model {
 
-template <typename T> class Property {
+template <typename T> class Property : private Base::NonCopyable {
   public:
     explicit Property() {}
     explicit Property(const T& value) : _value(value) {}
@@ -53,8 +54,6 @@ template <typename T> class Property {
 
     Base::Event::Event<Property<T>&>& onCleared() const { return _cleared; }
 
-    ~Property() {}
-
   private:
     optional<T> _value;
     Base::Event::Event<Property<T>&, T> _valueChanged;
@@ -63,7 +62,8 @@ template <typename T> class Property {
 
 template <typename T>
 inline bool operator==(const Property<T>& p1, const Property<T>& p2) {
-    return p1.hasValue() && p2.hasValue() && p1.value() == p2.value();
+    return (p1.isEmpty() && p2.isEmpty()) ||
+           (p1.hasValue() && p2.hasValue() && p1.value() == p2.value());
 }
 
 template <typename T>
