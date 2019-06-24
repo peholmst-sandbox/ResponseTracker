@@ -9,6 +9,7 @@ class EventTest : public QObject
     Q_OBJECT
   private slots:
     void connect_and_fire();
+    void connect_and_fire_with_lambda();
 };
 
 class MyEventHandler : public EventHandler<MyEventHandler> {
@@ -51,6 +52,26 @@ void EventTest::connect_and_fire() {
 
     myEvent.fire("hello again");
     QVERIFY(MyEventHandler::eventsReceived == 3); // myHandler2 is out of scope
+}
+
+void EventTest::connect_and_fire_with_lambda() {
+    int eventsReceived = 0;
+    Event<const QString&> myEvent;
+
+    SingleEventHandler<const QString&> myHandler(
+        [&eventsReceived](const QString& str) { eventsReceived++; });
+    myHandler.connect(myEvent);
+
+    {
+        SingleEventHandler<const QString&> myHandler2(
+            [&eventsReceived](const QString& str) { eventsReceived++; });
+        myHandler2.connect(myEvent);
+
+        myEvent.fire("hello world");
+        QVERIFY(eventsReceived == 2);
+    }
+    myEvent.fire("hello world");
+    QVERIFY(eventsReceived == 3);
 }
 
 QTEST_APPLESS_MAIN(EventTest)
