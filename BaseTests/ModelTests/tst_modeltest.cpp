@@ -2,6 +2,7 @@
 
 #include "model.h"
 
+using namespace Base::Event;
 using namespace Base::Model;
 
 class ModelTest : public QObject {
@@ -18,6 +19,7 @@ class ModelTest : public QObject {
     void property_equality_different_values();
     void property_equality_same_values();
     void property_event_value_changed();
+    void property_event_cleared();
 };
 
 class ValueChangeListener : Base::Event::EventHandler<ValueChangeListener> {
@@ -27,6 +29,11 @@ class ValueChangeListener : Base::Event::EventHandler<ValueChangeListener> {
     void onValueChanged(Property<QString>& sender, const QString& newValue) {
         lastNewValue = newValue;
     }
+};
+
+class MyModel {
+    PROPERTY(QString, myStringProperty)
+    PROPERTY(int, myIntProperty)
 };
 
 void ModelTest::property_state_no_initial_value() {
@@ -90,7 +97,33 @@ void ModelTest::property_equality_same_values() {
     QVERIFY(p1 == p2);
 }
 
-void ModelTest::property_event_value_changed() { Property<QString> p; }
+void ModelTest::property_event_value_changed() {
+    Property<QString> p;
+    QString receivedValue;
+    SingleEventHandler<Property<QString>&, QString> eventHandler(
+        [&receivedValue, &p](Property<QString>& sender, QString value) {
+            QVERIFY(p == sender);
+            receivedValue = value;
+        });
+    eventHandler.connect(p.valueChangedEvent());
+    p = "hello";
+    QCOMPARE(receivedValue, "hello");
+}
+
+void ModelTest::property_event_cleared() {
+    Property<QString> p;
+    int eventCount = 0;
+    SingleEventHandler<Property<QString>&> eventHandler(
+        [&eventCount, &p](Property<QString>& sender) {
+            QVERIFY(p == sender);
+            eventCount++;
+        });
+    eventHandler.connect(p.clearedEvent());
+    p = "hello";
+    QCOMPARE(0, eventCount);
+    p.clear();
+    QCOMPARE(1, eventCount);
+}
 
 QTEST_APPLESS_MAIN(ModelTest);
 

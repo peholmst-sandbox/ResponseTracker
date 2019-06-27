@@ -13,24 +13,43 @@ using namespace std;
 
 namespace Base::Model {
 
+/**
+ * TODO Document me!
+ */
 template <typename T> class Property : private Base::NonCopyable {
   public:
+    /**
+     * @brief Creates a new Property without a value.
+     */
     explicit Property() {}
+
+    /**
+     * @brief Creates a new Property with the given value.
+     *
+     * @param value the initial value of the property.
+     */
     explicit Property(const T& value) : _value(value) {}
 
-    // Delete copy constructor
-    Property(const Property&) = delete;
-    // Delete move constructor
-    Property(const Property&&) = delete;
-    // Delete copy assignment operator
-    Property& operator=(const Property&) = delete;
-    // Delete move assignment operator
-    Property& operator=(const Property&&) = delete;
-
+    /**
+     * @brief Checks if this Property is empty.
+     *
+     * @return true if the property is empty, false if it has a value.
+     */
     bool isEmpty() const { return !_value.has_value(); }
 
+    /**
+     * @brief Checks if this Property has a value.
+     *
+     * @return true if the property has a value, false if it is empty.
+     */
     bool hasValue() const { return _value.has_value(); }
 
+    /**
+     * @brief Sets the value of this Property to the given value. You can also
+     * use the assignment operator.
+     *
+     * @param value the new value to set.
+     */
     void setValue(const T& value) {
         _value = value;
         _valueChanged.fire(*this, value);
@@ -41,23 +60,27 @@ template <typename T> class Property : private Base::NonCopyable {
         return *this;
     }
 
+    /**
+     * @brief Returns the value of this Property. If the property is empty, an
+     * exception is thrown.
+     *
+     * @return the current value.
+     */
     T const& value() const { return _value.value(); }
 
+    /**
+     * @brief Clears this Property.
+     */
     void clear() {
         _value.reset();
         _cleared.fire(*this);
     }
 
-    Base::Event::Event<Property<T>&, T>& onValueChanged() const {
-        return _valueChanged;
-    }
-
-    Base::Event::Event<Property<T>&>& onCleared() const { return _cleared; }
+    EVENT(valueChanged, Property<T>&, T)
+    EVENT(cleared, Property<T>&)
 
   private:
     optional<T> _value;
-    Base::Event::Event<Property<T>&, T> _valueChanged;
-    Base::Event::Event<Property<T>&> _cleared;
 };
 
 template <typename T>
@@ -162,28 +185,17 @@ template <typename Id, typename Item> class Collection {
         }
     }
 
-    Base::Event::Event<Collection<Id, Item>&, Id, Item&>& onItemAdded() const {
-        return _itemAdded;
-    }
-
-    Base::Event::Event<Collection<Id, Item>&, Id>& onItemRemoved() const {
-        return _itemRemoved;
-    }
-
-    Base::Event::Event<Collection<Id, Item>&>& onCleared() const {
-        return _cleared;
-    }
-
     ~Collection() {}
+
+    EVENT(itemAdded, Collection<Id, Item>&, Id, Item&)
+    EVENT(itemRemoved, Collection<Id, Item>&, Id)
+    EVENT(cleared, Collection<Id, Item>&)
 
   private:
     IdFunction getItemId;
     map<Id, SmartItemPointer> _items;
     set<Id> _ids;
     vector<Id> _sortedIds;
-    Base::Event::Event<Collection<Id, Item>&, Id, Item&> _itemAdded;
-    Base::Event::Event<Collection<Id, Item>&, Id> _itemRemoved;
-    Base::Event::Event<Collection<Id, Item>&> _cleared;
 };
 
 template <typename Id> class Identifiable {
@@ -197,5 +209,13 @@ template <typename Id> class Identifiable {
 };
 
 } // namespace Base::Model
+
+#define PROPERTY(type, name)                                                   \
+  private:                                                                     \
+    Base::Model::Property<type> _##name;                                       \
+                                                                               \
+  public:                                                                      \
+    Base::Model::Property<type>& name() { return _##name; }                    \
+    const Base::Model::Property<type>& name() const { return _##name; }
 
 #endif // MODEL_H

@@ -206,4 +206,11 @@ class SingleEventHandler
 
 }; // namespace Base::Event
 
+#define EVENT(name, ...)                                                       \
+  private:                                                                     \
+    Base::Event::Event<__VA_ARGS__> _##name;                                   \
+                                                                               \
+  public:                                                                      \
+    Base::Event::Event<__VA_ARGS__>& name##Event() { return _##name; }
+
 #endif // EVENT_H
