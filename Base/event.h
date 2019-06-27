@@ -206,6 +206,7 @@ class SingleEventHandler
 
 }; // namespace Base::Event
 
+// TODO Document this macro in some way
 #define EVENT(name, ...)                                                       \
   private:                                                                     \
     Base::Event::Event<__VA_ARGS__> _##name;                                   \

@@ -18,6 +18,9 @@ class ModelTest : public QObject {
     void property_equality_one_empty();
     void property_equality_different_values();
     void property_equality_same_values();
+    void property_comparation_both_empty();
+    void property_comparation_one_empty();
+    void property_comparation_different_values();
     void property_event_value_changed();
     void property_event_cleared();
 };
@@ -90,11 +93,35 @@ void ModelTest::property_equality_one_empty() {
 void ModelTest::property_equality_different_values() {
     Property<QString> p1("hello"), p2("world");
     QVERIFY(p1 != p2);
+    QVERIFY(p1 != "world");
 }
 
 void ModelTest::property_equality_same_values() {
     Property<QString> p1("hello"), p2("hello");
     QVERIFY(p1 == p2);
+    QVERIFY(p1 == "hello");
+}
+
+void ModelTest::property_comparation_different_values() {
+    Property<int> p1(10), p2(20);
+    QVERIFY(p2 > p1);
+    QVERIFY(p1 < p2);
+    QVERIFY(p2 > 10);
+    QVERIFY(p1 < 20);
+}
+
+void ModelTest::property_comparation_both_empty() {
+    Property<int> p1, p2;
+    QVERIFY(!(p2 > p1));
+    QVERIFY(!(p2 < p1));
+}
+
+void ModelTest::property_comparation_one_empty() {
+    Property<int> p1(10), p2;
+    QVERIFY(p1 > p2);
+    QVERIFY(p2 < p1);
+    QVERIFY(p2 < 0);
+    QVERIFY(!(p2 > 0));
 }
 
 void ModelTest::property_event_value_changed() {

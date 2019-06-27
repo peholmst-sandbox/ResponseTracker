@@ -60,6 +60,22 @@ template <typename T> class Property : private Base::NonCopyable {
         return *this;
     }
 
+    bool operator==(const T& value) const {
+        return _value.has_value() && _value.value() == value;
+    }
+
+    bool operator!=(const T& value) const {
+        return !_value.has_value() || _value.value() != value;
+    }
+
+    bool operator<(const T& value) const {
+        return !_value.has_value() || _value.value() < value;
+    }
+
+    bool operator>(const T& value) const {
+        return _value.has_value() && _value.value() > value;
+    }
+
     /**
      * @brief Returns the value of this Property. If the property is empty, an
      * exception is thrown.
@@ -98,6 +114,12 @@ template <typename T>
 inline bool operator<(const Property<T>& p1, const Property<T>& p2) {
     return (p1.isEmpty() && p2.hasValue()) ||
            (p1.hasValue() && p2.hasValue() && p1.value() < p2.value());
+}
+
+template <typename T>
+inline bool operator>(const Property<T>& p1, const Property<T>& p2) {
+    return (p1.hasValue() && p2.isEmpty()) ||
+           (p1.hasValue() && p2.hasValue() && p1.value() > p2.value());
 }
 
 template <typename Id> class SortView {
@@ -210,12 +232,13 @@ template <typename Id> class Identifiable {
 
 } // namespace Base::Model
 
+// TODO Document this macro in some way
 #define PROPERTY(type, name)                                                   \
   private:                                                                     \
     Base::Model::Property<type> _##name;                                       \
                                                                                \
   public:                                                                      \
     Base::Model::Property<type>& name() { return _##name; }                    \
-    const Base::Model::Property<type>& name() const { return _##name; }
+    Base::Model::Property<type> const& name() const { return _##name; }
 
 #endif // MODEL_H
