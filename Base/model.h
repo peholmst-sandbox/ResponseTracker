@@ -138,33 +138,70 @@ template <typename Id> class SortView {
     vector<Id> _sortedIds;
 };
 
-template <typename Id, typename Item> class Collection {
-    using IdFunction = Id (*)(Item const&);
+/**
+ * TODO document me
+ */
+template <typename Id, typename Item>
+class Collection : private Base::NonCopyable {
     using CompareFunction = bool (*)(Item const&, Item const&);
     using SmartItemPointer = unique_ptr<Item>;
     using size_type = typename std::map<Id, SmartItemPointer>::size_type;
 
   public:
-    explicit Collection(const IdFunction& idFunction) : getItemId(idFunction) {}
-    // Delete copy constructor
-    Collection(const Collection&) = delete;
-    // Delete copy assignment operator
-    Collection& operator=(const Collection<Id, Item>&) = delete;
+    /**
+     * @brief Collection
+     * @param idFunction
+     */
+    explicit Collection(const function<Id(Item const&)>& idFunction)
+        : _idFunction(idFunction) {}
 
+    /**
+     * @brief Checks if this collection is empty.
+     * @return true if this collection is empty, false if it contains at least
+     * one item.
+     */
     bool isEmpty() const { return _items.empty(); }
 
+    /**
+     * @brief Checks if this collection has any items.
+     * @return true if this collection has at least one item, false if it is
+     * empty.
+     */
     bool hasItems() const { return !_items.empty(); }
 
+    /**
+     * @brief Returns the size of this collection (i.e. the number of items in
+     * it).
+     * @return the collection size.
+     */
     size_type size() const { return _items.size(); }
 
+    /**
+     * @brief contains
+     * @param id
+     * @return
+     */
     bool contains(const Id& id) const { return _items.count(id) > 0; }
 
+    /**
+     * @brief ids
+     * @return
+     */
     set<Id> const& ids() const { return _ids; }
 
+    /**
+     * @brief findById
+     * @param id
+     * @return
+     */
     Item& findById(const Id& id) const { return *_items.at(id); }
 
-    void add(const Item* item) {
-        auto id = getItemId(*item);
+    /**
+     * @brief add
+     * @param item
+     */
+    void add(Item* item) {
+        auto id = _idFunction(*item);
         if (!contains(id)) {
             _ids.insert(id);
             _items[id] = SmartItemPointer(item);
@@ -172,6 +209,20 @@ template <typename Id, typename Item> class Collection {
         }
     }
 
+    /**
+     * @brief add
+     * @param item
+     */
+    Item* addCopy(const Item& item) {
+        auto copy = new Item(item);
+        add(copy);
+        return copy;
+    }
+
+    /**
+     * @brief removeById
+     * @param id
+     */
     void removeById(const Id& id) {
         if (_items.erase(id) > 0) {
             _ids.erase(id);
@@ -179,8 +230,15 @@ template <typename Id, typename Item> class Collection {
         }
     }
 
+    /**
+     * @brief remove
+     * @param item
+     */
     void remove(const Item& item) { removeById(getItemId(item)); }
 
+    /**
+     * @brief clear
+     */
     void clear() {
         _items.clear();
         _cleared.fire(*this);
@@ -214,7 +272,7 @@ template <typename Id, typename Item> class Collection {
     EVENT(cleared, Collection<Id, Item>&)
 
   private:
-    IdFunction getItemId;
+    function<Id(Item const&)> _idFunction;
     map<Id, SmartItemPointer> _items;
     set<Id> _ids;
     vector<Id> _sortedIds;

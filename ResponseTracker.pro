@@ -1,5 +1,7 @@
 TEMPLATE = subdirs
 
 SUBDIRS = \
+    App \
     Base \
-    BaseTests
+    BaseTests \
+    GsmGateway

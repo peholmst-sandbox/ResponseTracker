@@ -23,6 +23,9 @@ class ModelTest : public QObject {
     void property_comparation_different_values();
     void property_event_value_changed();
     void property_event_cleared();
+
+    void collection_initial_state();
+    void collection_add_pointer();
 };
 
 class ValueChangeListener : Base::Event::EventHandler<ValueChangeListener> {
@@ -37,6 +40,14 @@ class ValueChangeListener : Base::Event::EventHandler<ValueChangeListener> {
 class MyModel {
     PROPERTY(QString, myStringProperty)
     PROPERTY(int, myIntProperty)
+
+  private:
+    int _id;
+
+  public:
+    MyModel(const int id) : _id(id) {}
+    int id() const { return _id; }
+    void setId(const int id) { _id = id; }
 };
 
 void ModelTest::property_state_no_initial_value() {
@@ -150,6 +161,28 @@ void ModelTest::property_event_cleared() {
     QCOMPARE(0, eventCount);
     p.clear();
     QCOMPARE(1, eventCount);
+}
+
+void ModelTest::collection_initial_state() {
+    Collection<int, MyModel> collection(&MyModel::id);
+    QVERIFY(collection.isEmpty());
+    QVERIFY(!collection.hasItems());
+    QVERIFY(collection.ids().empty());
+    QCOMPARE(0, collection.size());
+}
+
+void ModelTest::collection_add_pointer() {
+    Collection<int, MyModel> collection(&MyModel::id);
+
+    auto itemPointer = new MyModel(123);
+
+    collection.add(itemPointer);
+    QCOMPARE(1, collection.size());
+    QVERIFY(collection.contains(123));
+    QVERIFY(collection.hasItems());
+    QVERIFY(!collection.isEmpty());
+    QVERIFY(collection.ids().count(123) == 1);
+    QCOMPARE(itemPointer, &collection.findById(123));
 }
 
 QTEST_APPLESS_MAIN(ModelTest);
